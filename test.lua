@@ -1,5 +1,5 @@
 --!strict
--- Paxz Scriptz — Cosmic Edition
+-- Paxz Scriptz — Cosmic Edition v2.0
 -- Original Roblox Luau UI library with a Rayfield-inspired builder API.
 -- Place this ModuleScript somewhere accessible to a LocalScript and require it on the client.
 -- This library builds UI only; add your own game logic through callbacks.
@@ -26,6 +26,19 @@ local COLORS = {
 	Mint = Color3.fromRGB(108, 255, 204),
 	Discord = Color3.fromRGB(88, 101, 242),
 	Red = Color3.fromRGB(255, 99, 129),
+	Blue = Color3.fromRGB(102, 119, 255),
+	Surface = Color3.fromRGB(17, 12, 30),
+	SurfaceRaised = Color3.fromRGB(25, 17, 42),
+}
+
+-- Roblox's built-in Gotham family gives a clean, consistent hierarchy.
+-- Plus Jakarta Sans can be used later through a properly uploaded FontFace asset.
+local FONTS = {
+	Display = Enum.Font.GothamBlack,
+	Heading = Enum.Font.GothamBold,
+	Body = Enum.Font.GothamMedium,
+	Regular = Enum.Font.Gotham,
+	Mono = Enum.Font.Code,
 }
 
 local function create(className, parent, properties)
@@ -55,7 +68,7 @@ local function textLabel(parent, text, size, color, font, properties)
 		Text = text or "",
 		TextColor3 = color or COLORS.White,
 		TextSize = size or 14,
-		Font = font or Enum.Font.Gotham,
+		Font = font or FONTS.Body,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Center,
 		TextWrapped = false,
@@ -134,8 +147,25 @@ local function makeCard(parent, height)
 		ZIndex = 5,
 		ClipsDescendants = true,
 	})
-	corner(card, 11)
-	outline(card, COLORS.Line, 0.52, 1)
+	corner(card, 13)
+	outline(card, COLORS.Line, 0.58, 1)
+	create("UIGradient", card, {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, COLORS.SurfaceRaised),
+			ColorSequenceKeypoint.new(1, COLORS.Card),
+		}),
+		Rotation = 18,
+	})
+	card.MouseEnter:Connect(function()
+		tween(card, 0.18, { BackgroundColor3 = COLORS.CardHover })
+		local stroke = card:FindFirstChildOfClass("UIStroke")
+		if stroke then tween(stroke, 0.18, { Transparency = 0.32, Color = COLORS.Purple }) end
+	end)
+	card.MouseLeave:Connect(function()
+		tween(card, 0.22, { BackgroundColor3 = COLORS.Card })
+		local stroke = card:FindFirstChildOfClass("UIStroke")
+		if stroke then tween(stroke, 0.22, { Transparency = 0.58, Color = COLORS.Line }) end
+	end)
 	return card
 end
 
@@ -153,7 +183,7 @@ local function addStarfield(parent, count)
 	local function nebula(x, y, width, height, color, duration, endX, endY)
 		local haze = create("Frame", layer, {
 			BackgroundColor3 = color,
-			BackgroundTransparency = 0.955,
+			BackgroundTransparency = 0.94,
 			BorderSizePixel = 0,
 			Position = UDim2.fromScale(x, y),
 			Size = UDim2.fromOffset(width, height),
@@ -162,7 +192,7 @@ local function addStarfield(parent, count)
 		corner(haze, 999)
 		local inner = create("Frame", haze, {
 			BackgroundColor3 = color,
-			BackgroundTransparency = 0.9,
+			BackgroundTransparency = 0.88,
 			BorderSizePixel = 0,
 			Position = UDim2.fromScale(0.18, 0.18),
 			Size = UDim2.fromScale(0.64, 0.64),
@@ -250,7 +280,25 @@ function Paxz:CreateWindow(configuration)
 		ZIndex = 1,
 	})
 	corner(main, 16)
-	outline(main, COLORS.Purple, 0.28, 1.25)
+	outline(main, COLORS.Purple, 0.22, 1.25)
+
+	local atmosphere = create("Frame", main, {
+		Name = "CosmicAtmosphere",
+		BackgroundColor3 = COLORS.Background,
+		BackgroundTransparency = 0.08,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 1,
+	})
+	corner(atmosphere, 16)
+	create("UIGradient", atmosphere, {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(23, 8, 42)),
+			ColorSequenceKeypoint.new(0.46, COLORS.Background),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 5, 17)),
+		}),
+		Rotation = 35,
+	})
 
 	local shadow = create("Frame", main, {
 		Name = "AmbientGlow",
@@ -265,6 +313,7 @@ function Paxz:CreateWindow(configuration)
 	addStarfield(main, configuration.StarCount or 180)
 
 	local uiScale = create("UIScale", main, { Scale = 1 })
+	local openingScale = create("UIScale", main, { Scale = 1 })
 	local function updateScale()
 		local camera = workspace.CurrentCamera
 		if not camera then return end
@@ -284,7 +333,18 @@ function Paxz:CreateWindow(configuration)
 		ZIndex = 6,
 	})
 
-	local meteor = textLabel(header, "☄", 25, COLORS.Violet, Enum.Font.GothamBlack, {
+	local meteorHalo = create("Frame", header, {
+		Name = "MeteorHalo",
+		BackgroundColor3 = COLORS.Purple,
+		BackgroundTransparency = 0.9,
+		BorderSizePixel = 0,
+		Position = UDim2.fromOffset(18, 10),
+		Size = UDim2.fromOffset(34, 34),
+		ZIndex = 7,
+	})
+	corner(meteorHalo, 99)
+	outline(meteorHalo, COLORS.Violet, 0.78, 1)
+	local meteor = textLabel(header, "☄", 25, COLORS.Violet, FONTS.Display, {
 		Position = UDim2.fromOffset(19, 9),
 		Size = UDim2.fromOffset(32, 34),
 		TextXAlignment = Enum.TextXAlignment.Center,
@@ -300,10 +360,17 @@ function Paxz:CreateWindow(configuration)
 	textLabel(header, configuration.Brand or "Paxz", 19, COLORS.White, Enum.Font.GothamBlack, {
 		Position = UDim2.fromOffset(55, 8), Size = UDim2.fromOffset(58, 35), ZIndex = 8,
 	})
-	textLabel(header, configuration.BrandAccent or "Scriptz", 19, COLORS.Violet, Enum.Font.GothamBlack, {
-		Position = UDim2.fromOffset(112, 8), Size = UDim2.fromOffset(93, 35), ZIndex = 8,
+	local brandAccent = textLabel(header, configuration.BrandAccent or "Scriptz", 19, COLORS.Violet, FONTS.Display, {
+		Position = UDim2.fromOffset(112, 8), Size = UDim2.fromOffset(101, 35), ZIndex = 8,
 	})
-	textLabel(header, "COSMIC EDITION", 8, COLORS.Muted, Enum.Font.GothamBold, {
+	create("UIGradient", brandAccent, {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, COLORS.Violet),
+			ColorSequenceKeypoint.new(1, COLORS.Purple),
+		}),
+		Rotation = 0,
+	})
+	textLabel(header, "COSMIC  /  INTERFACE", 8, COLORS.Muted, FONTS.Heading, {
 		Position = UDim2.fromOffset(58, 33), Size = UDim2.fromOffset(130, 13), ZIndex = 8,
 		TextXAlignment = Enum.TextXAlignment.Left,
 	})
@@ -330,7 +397,7 @@ function Paxz:CreateWindow(configuration)
 	TweenService:Create(statusDot, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
 		BackgroundTransparency = 0.75,
 	}):Play()
-	textLabel(status, "SYSTEM ONLINE", 9, COLORS.Mint, Enum.Font.GothamBold, {
+	textLabel(status, "SYSTEM ONLINE", 9, COLORS.Mint, FONTS.Heading, {
 		Position = UDim2.fromOffset(23, 0), Size = UDim2.new(1, -27, 1, 0), ZIndex = 9,
 	})
 
@@ -339,7 +406,7 @@ function Paxz:CreateWindow(configuration)
 		Text = "−",
 		TextColor3 = COLORS.Muted,
 		TextSize = 22,
-		Font = Enum.Font.Gotham,
+		Font = FONTS.Body,
 		BackgroundColor3 = COLORS.Card,
 		BorderSizePixel = 0,
 		AnchorPoint = Vector2.new(1, 0.5),
@@ -355,7 +422,7 @@ function Paxz:CreateWindow(configuration)
 		Text = "×",
 		TextColor3 = COLORS.Muted,
 		TextSize = 18,
-		Font = Enum.Font.Gotham,
+		Font = FONTS.Body,
 		BackgroundColor3 = COLORS.Card,
 		BorderSizePixel = 0,
 		AnchorPoint = Vector2.new(1, 0.5),
@@ -368,11 +435,23 @@ function Paxz:CreateWindow(configuration)
 
 	local headerLine = create("Frame", main, {
 		BackgroundColor3 = COLORS.Purple,
-		BackgroundTransparency = 0.72,
+		BackgroundTransparency = 0.52,
 		BorderSizePixel = 0,
 		Position = UDim2.fromOffset(0, 55),
 		Size = UDim2.new(1, 0, 0, 1),
 		ZIndex = 6,
+	})
+	create("UIGradient", headerLine, {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, COLORS.DeepPurple),
+			ColorSequenceKeypoint.new(0.5, COLORS.Violet),
+			ColorSequenceKeypoint.new(1, COLORS.DeepPurple),
+		}),
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.18),
+			NumberSequenceKeypoint.new(0.5, 0),
+			NumberSequenceKeypoint.new(1, 0.18),
+		}),
 	})
 
 	local contentHost = create("Frame", main, {
@@ -471,7 +550,7 @@ function Paxz:CreateWindow(configuration)
 			CanvasSize = UDim2.new(0, 0, 0, 0),
 			AutomaticCanvasSize = Enum.AutomaticSize.Y,
 			ScrollingDirection = Enum.ScrollingDirection.Y,
-			ScrollBarThickness = 3,
+			ScrollBarThickness = 4,
 			ScrollBarImageColor3 = COLORS.Purple,
 			ScrollBarImageTransparency = 0.25,
 			Visible = false,
@@ -483,7 +562,7 @@ function Paxz:CreateWindow(configuration)
 		})
 		create("UIListLayout", page, {
 			SortOrder = Enum.SortOrder.LayoutOrder,
-			Padding = UDim.new(0, 9),
+			Padding = UDim.new(0, 11),
 		})
 		return page
 	end
@@ -495,7 +574,7 @@ function Paxz:CreateWindow(configuration)
 			Size = UDim2.new(1, 0, 0, 27),
 			ZIndex = 5,
 		})
-		textLabel(holder, string.upper(name or "SECTION"), 10, COLORS.Violet, Enum.Font.GothamBold, {
+		textLabel(holder, string.upper(name or "SECTION"), 11, COLORS.Violet, FONTS.Heading, {
 			Position = UDim2.fromOffset(4, 0),
 			Size = UDim2.new(0, 190, 1, 0),
 			ZIndex = 6,
@@ -526,8 +605,8 @@ function Paxz:CreateWindow(configuration)
 			Name = name .. "TabButton",
 			Text = (icon and (tostring(icon) .. "   ") or "") .. name,
 			TextColor3 = COLORS.Muted,
-			TextSize = 11,
-			Font = Enum.Font.GothamBold,
+			TextSize = 12,
+			Font = FONTS.Heading,
 			BackgroundColor3 = COLORS.Card,
 			BackgroundTransparency = 0.12,
 			BorderSizePixel = 0,
@@ -585,7 +664,7 @@ function Paxz:CreateWindow(configuration)
 		function tab:CreateLabel(config)
 			config = type(config) == "table" and config or { Name = tostring(config or "Label") }
 			local card = makeCard(self.Page, 42)
-			local label = textLabel(card, config.Name or config.Text or "Label", 12, config.Color or COLORS.Muted, Enum.Font.GothamMedium, {
+			local label = textLabel(card, config.Name or config.Text or "Label", 13, config.Color or COLORS.Muted, FONTS.Body, {
 				Position = UDim2.fromOffset(13, 0), Size = UDim2.new(1, -26, 1, 0), ZIndex = 6,
 			})
 			local object = {}
@@ -597,10 +676,10 @@ function Paxz:CreateWindow(configuration)
 		function tab:CreateParagraph(config)
 			config = config or {}
 			local card = makeCard(self.Page, config.Height or 94)
-			textLabel(card, config.Title or "Information", 13, COLORS.White, Enum.Font.GothamBold, {
+			textLabel(card, config.Title or "Information", 14, COLORS.White, FONTS.Heading, {
 				Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -28, 0, 21), ZIndex = 6,
 			})
-			textLabel(card, config.Content or "Add your own description here.", 11, COLORS.Muted, Enum.Font.Gotham, {
+			textLabel(card, config.Content or "Add your own description here.", 12, COLORS.Muted, FONTS.Body, {
 				Position = UDim2.fromOffset(14, 31), Size = UDim2.new(1, -28, 1, -38),
 				TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 6,
 			})
@@ -610,10 +689,10 @@ function Paxz:CreateWindow(configuration)
 		function tab:CreateButton(config)
 			config = config or {}
 			local card = makeCard(self.Page, config.Height or 68)
-			textLabel(card, config.Name or "Button", 12, COLORS.White, Enum.Font.GothamBold, {
+			textLabel(card, config.Name or "Button", 13, COLORS.White, FONTS.Heading, {
 				Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -177, 0, 22), ZIndex = 6,
 			})
-			textLabel(card, config.Description or "Run the action linked to this control.", 10, COLORS.Muted, Enum.Font.Gotham, {
+			textLabel(card, config.Description or "Run the action linked to this control.", 11, COLORS.Muted, FONTS.Body, {
 				Position = UDim2.fromOffset(14, 31), Size = UDim2.new(1, -177, 0, 20), ZIndex = 6,
 			})
 			local button = create("TextButton", card, {
@@ -646,10 +725,10 @@ function Paxz:CreateWindow(configuration)
 			config = config or {}
 			local state = config.CurrentValue == true or config.Default == true
 			local card = makeCard(self.Page, 66)
-			textLabel(card, config.Name or "Toggle", 12, COLORS.White, Enum.Font.GothamBold, {
+			textLabel(card, config.Name or "Toggle", 13, COLORS.White, FONTS.Heading, {
 				Position = UDim2.fromOffset(14, 7), Size = UDim2.new(1, -86, 0, 23), ZIndex = 6,
 			})
-			textLabel(card, config.Description or "Enable or disable this option.", 10, COLORS.Muted, Enum.Font.Gotham, {
+			textLabel(card, config.Description or "Enable or disable this option.", 11, COLORS.Muted, FONTS.Body, {
 				Position = UDim2.fromOffset(14, 31), Size = UDim2.new(1, -86, 0, 20), ZIndex = 6,
 			})
 			local switch = create("TextButton", card, {
@@ -685,7 +764,7 @@ function Paxz:CreateWindow(configuration)
 			local increment = math.max(tonumber(config.Increment) or 1, 0.000001)
 			local current = math.clamp(tonumber(config.CurrentValue) or minimum, minimum, maximum)
 			local card = makeCard(self.Page, 82)
-			local title = textLabel(card, config.Name or "Slider", 12, COLORS.White, Enum.Font.GothamBold, {
+			local title = textLabel(card, config.Name or "Slider", 13, COLORS.White, FONTS.Heading, {
 				Position = UDim2.fromOffset(14, 7), Size = UDim2.new(1, -130, 0, 22), ZIndex = 6,
 			})
 			local valueLabel = textLabel(card, "", 11, COLORS.Violet, Enum.Font.GothamBold, {
@@ -763,11 +842,11 @@ function Paxz:CreateWindow(configuration)
 				selected[tostring(options[1])] = true
 			end
 			local card = makeCard(self.Page, 73)
-			textLabel(card, config.Name or "Dropdown", 12, COLORS.White, Enum.Font.GothamBold, {
+			textLabel(card, config.Name or "Dropdown", 13, COLORS.White, FONTS.Heading, {
 				Position = UDim2.fromOffset(14, 5), Size = UDim2.new(1, -28, 0, 22), ZIndex = 6,
 			})
 			local choice = create("TextButton", card, {
-				Text = "", TextColor3 = COLORS.Muted, TextSize = 10, Font = Enum.Font.Gotham,
+				Text = "", TextColor3 = COLORS.Muted, TextSize = 11, Font = FONTS.Body,
 				TextXAlignment = Enum.TextXAlignment.Left, AutoButtonColor = false,
 				BackgroundColor3 = COLORS.Background, BorderSizePixel = 0,
 				Position = UDim2.fromOffset(12, 32), Size = UDim2.new(1, -24, 0, 29), ZIndex = 7,
@@ -782,7 +861,7 @@ function Paxz:CreateWindow(configuration)
 			local optionsFrame = create("ScrollingFrame", card, {
 				BackgroundTransparency = 1, BorderSizePixel = 0,
 				Position = UDim2.fromOffset(12, 66), Size = UDim2.new(1, -24, 0, listHeight),
-				CanvasSize = UDim2.new(0, 0, 0, #options * 27), ScrollBarThickness = 3,
+				CanvasSize = UDim2.new(0, 0, 0, #options * 27), ScrollBarThickness = 4,
 				ScrollBarImageColor3 = COLORS.Purple, Visible = false, ZIndex = 8,
 			})
 			create("UIListLayout", optionsFrame, { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2) })
@@ -809,7 +888,7 @@ function Paxz:CreateWindow(configuration)
 			end
 			for index, option in ipairs(options) do
 				local optionButton = create("TextButton", optionsFrame, {
-					Text = tostring(option), TextColor3 = COLORS.Muted, TextSize = 10, Font = Enum.Font.Gotham,
+					Text = tostring(option), TextColor3 = COLORS.Muted, TextSize = 11, Font = FONTS.Body,
 					TextXAlignment = Enum.TextXAlignment.Left, AutoButtonColor = false,
 					BackgroundColor3 = COLORS.Card, BorderSizePixel = 0,
 					Size = UDim2.new(1, -4, 0, 25), LayoutOrder = index, ZIndex = 9,
@@ -869,13 +948,13 @@ function Paxz:CreateWindow(configuration)
 		function tab:CreateInput(config)
 			config = config or {}
 			local card = makeCard(self.Page, 73)
-			textLabel(card, config.Name or "Input", 12, COLORS.White, Enum.Font.GothamBold, {
+			textLabel(card, config.Name or "Input", 13, COLORS.White, FONTS.Heading, {
 				Position = UDim2.fromOffset(14, 5), Size = UDim2.new(1, -28, 0, 22), ZIndex = 6,
 			})
 			local box = create("TextBox", card, {
 				Text = tostring(config.CurrentValue or ""), PlaceholderText = config.PlaceholderText or "Type something...",
 				PlaceholderColor3 = COLORS.Muted, ClearTextOnFocus = false,
-				TextColor3 = COLORS.White, TextSize = 11, Font = Enum.Font.Gotham,
+				TextColor3 = COLORS.White, TextSize = 12, Font = FONTS.Body,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				BackgroundColor3 = COLORS.Background, BorderSizePixel = 0,
 				Position = UDim2.fromOffset(12, 32), Size = UDim2.new(1, -24, 0, 29), ZIndex = 7,
@@ -896,10 +975,10 @@ function Paxz:CreateWindow(configuration)
 			local hold = config.HoldToInteract == true
 			local listening = false
 			local card = makeCard(self.Page, 66)
-			textLabel(card, config.Name or "Keybind", 12, COLORS.White, Enum.Font.GothamBold, {
+			textLabel(card, config.Name or "Keybind", 13, COLORS.White, FONTS.Heading, {
 				Position = UDim2.fromOffset(14, 7), Size = UDim2.new(1, -120, 0, 23), ZIndex = 6,
 			})
-			textLabel(card, config.Description or "Click the key capsule to change the bind.", 10, COLORS.Muted, Enum.Font.Gotham, {
+			textLabel(card, config.Description or "Click the key capsule to change the bind.", 11, COLORS.Muted, FONTS.Body, {
 				Position = UDim2.fromOffset(14, 31), Size = UDim2.new(1, -120, 0, 19), ZIndex = 6,
 			})
 			local keyButton = create("TextButton", card, {
@@ -1038,8 +1117,22 @@ function Paxz:CreateWindow(configuration)
 	end))
 
 	function window:SetVisibility(value)
-		self.Visible = value == true
-		main.Visible = self.Visible
+		local shouldShow = value == true
+		if shouldShow then
+			self.Visible = true
+			main.Visible = true
+			main.Position = UDim2.new(0.5, 0, 0.52, 0)
+			main.BackgroundTransparency = 1
+			openingScale.Scale = 0.95
+			tween(main, 0.32, {
+				BackgroundTransparency = 0,
+				Position = UDim2.fromScale(0.5, 0.5),
+			}, Enum.EasingStyle.Quint)
+			tween(openingScale, 0.38, { Scale = 1 }, Enum.EasingStyle.Back)
+		else
+			self.Visible = false
+			main.Visible = false
+		end
 	end
 	function window:ToggleVisibility()
 		self:SetVisibility(not self.Visible)
@@ -1063,7 +1156,7 @@ function Paxz:CreateWindow(configuration)
 		textLabel(toast, config.Title or "Paxz Scriptz", 12, COLORS.White, Enum.Font.GothamBold, {
 			Position = UDim2.fromOffset(14, 10), Size = UDim2.new(1, -26, 0, 21), ZIndex = 52,
 		})
-		textLabel(toast, config.Content or config.Message or "Action completed.", 10, COLORS.Muted, Enum.Font.Gotham, {
+		textLabel(toast, config.Content or config.Message or "Action completed.", 10, COLORS.Muted, FONTS.Body, {
 			Position = UDim2.fromOffset(14, 32), Size = UDim2.new(1, -26, 0, 34),
 			TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 52,
 		})
@@ -1087,10 +1180,158 @@ function Paxz:CreateWindow(configuration)
 		if gui.Parent then gui:Destroy() end
 	end
 
-	-- Appear with a short fade-and-scale intro.
+	-- Premium first-launch splash: fade, scale, and animated progress reveal.
 	main.BackgroundTransparency = 1
-	local openingScale = create("UIScale", main, { Scale = 0.96 })
-	tween(main, 0.32, { BackgroundTransparency = 0 })	tween(openingScale, 0.38, { Scale = 1 })
+	main.Position = UDim2.new(0.5, 0, 0.52, 0)
+	openingScale.Scale = 0.94
+
+	local intro = create("Frame", main, {
+		Name = "CosmicIntro",
+		BackgroundColor3 = COLORS.Background,
+		BackgroundTransparency = 0.06,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 60,
+	})
+	corner(intro, 16)
+	create("UIGradient", intro, {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(23, 8, 42)),
+			ColorSequenceKeypoint.new(0.5, COLORS.Background),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 5, 17)),
+		}),
+		Rotation = 28,
+	})
+
+	local introTopLine = create("Frame", intro, {
+		Name = "IntroAccent",
+		BackgroundColor3 = COLORS.Violet,
+		BackgroundTransparency = 0.2,
+		BorderSizePixel = 0,
+		Position = UDim2.fromOffset(22, 0),
+		Size = UDim2.new(1, -44, 0, 2),
+		ZIndex = 61,
+	})
+	create("UIGradient", introTopLine, {
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.5, 0),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+	})
+
+	local introContent = create("Frame", intro, {
+		Name = "IntroContent",
+		BackgroundTransparency = 1,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(390, 220),
+		ZIndex = 61,
+	})
+	local introScale = create("UIScale", introContent, { Scale = 0.92 })
+
+	local introBadge = create("Frame", introContent, {
+		BackgroundColor3 = COLORS.Purple,
+		BackgroundTransparency = 0.88,
+		BorderSizePixel = 0,
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 6),
+		Size = UDim2.fromOffset(202, 28),
+		ZIndex = 62,
+	})
+	corner(introBadge, 99)
+	outline(introBadge, COLORS.Violet, 0.48, 1)
+	textLabel(introBadge, "✦   INITIALIZING COSMIC UI", 9, COLORS.Violet, FONTS.Heading, {
+		Size = UDim2.fromScale(1, 1),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		ZIndex = 63,
+	})
+
+	local introTitle = textLabel(introContent, string.upper((configuration.Brand or "Paxz") .. " " .. (configuration.BrandAccent or "Scriptz")), 31, COLORS.White, FONTS.Display, {
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 42),
+		Size = UDim2.new(1, 0, 0, 45),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextTransparency = 0.04,
+		ZIndex = 63,
+	})
+	create("UIGradient", introTitle, {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, COLORS.White),
+			ColorSequenceKeypoint.new(0.48, COLORS.Violet),
+			ColorSequenceKeypoint.new(1, COLORS.Purple),
+		}),
+		Rotation = 0,
+	})
+	textLabel(introContent, "C O S M I C   E D I T I O N", 10, COLORS.Muted, FONTS.Body, {
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 90),
+		Size = UDim2.new(1, 0, 0, 19),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		ZIndex = 63,
+	})
+
+	local progressTrack = create("Frame", introContent, {
+		Name = "LoadingTrack",
+		BackgroundColor3 = COLORS.Line,
+		BackgroundTransparency = 0.34,
+		BorderSizePixel = 0,
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 130),
+		Size = UDim2.fromOffset(250, 5),
+		ZIndex = 62,
+	})
+	corner(progressTrack, 99)
+	local progressFill = create("Frame", progressTrack, {
+		Name = "LoadingProgress",
+		BackgroundColor3 = COLORS.Violet,
+		BorderSizePixel = 0,
+		Size = UDim2.new(0, 0, 1, 0),
+		ZIndex = 63,
+	})
+	corner(progressFill, 99)
+	create("UIGradient", progressFill, {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, COLORS.DeepPurple),
+			ColorSequenceKeypoint.new(1, COLORS.Violet),
+		}),
+	})
+	local introStatus = textLabel(introContent, "CALIBRATING STARFIELD  ·  PREPARING INTERFACE", 9, COLORS.Muted, FONTS.Body, {
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 146),
+		Size = UDim2.new(1, 0, 0, 20),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		ZIndex = 63,
+	})
+
+	tween(main, 0.52, {
+		BackgroundTransparency = 0,
+		Position = UDim2.fromScale(0.5, 0.5),
+	}, Enum.EasingStyle.Quint)
+	tween(openingScale, 0.58, { Scale = 1 }, Enum.EasingStyle.Back)
+	tween(introScale, 0.62, { Scale = 1 }, Enum.EasingStyle.Back)
+	tween(progressFill, 1.05, { Size = UDim2.new(1, 0, 1, 0) }, Enum.EasingStyle.Quart)
+
+	task.spawn(function()
+		task.wait(1.12)
+		if not intro.Parent or window.Destroyed then return end
+		introStatus.Text = "READY  ·  WELCOME TO PAXZ SCRIPTZ"
+		tween(introStatus, 0.16, { TextColor3 = COLORS.Mint })
+		task.wait(0.22)
+		if not intro.Parent then return end
+		for _, descendant in ipairs(intro:GetDescendants()) do
+			if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
+				tween(descendant, 0.28, { TextTransparency = 1 })
+			elseif descendant:IsA("Frame") then
+				tween(descendant, 0.3, { BackgroundTransparency = 1 })
+			elseif descendant:IsA("UIStroke") then
+				tween(descendant, 0.24, { Transparency = 1 })
+			end
+		end
+		tween(intro, 0.34, { BackgroundTransparency = 1 })
+		task.wait(0.38)
+		if intro.Parent then intro:Destroy() end
+	end)
 
 	return window
 end
